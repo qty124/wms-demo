@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}流水记录{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-1"><i class="bi bi-clock-history me-2 text-primary"></i>出入库流水</h3>
+        <p class="text-muted mb-0">共 {{ txs|length }} 条记录（按时间倒序，最多展示 200 条）</p>
+    </div>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>返回仪表盘
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:160px;">时间</th>
+                        <th>类型</th>
+                        <th>图书</th>
+                        <th class="text-end">数量</th>
+                        <th>操作人</th>
+                        <th>备注</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tx in txs %}
+                    <tr>
+                        <td class="text-muted small">{{ tx.created_at|datetime_cn }}</td>
+                        <td>
+                            <span class="badge bg-{{ tx.type_color }}-subtle text-{{ tx.type_color }}">
+                                {% if tx.type == 'in' %}
+                                <i class="bi bi-arrow-down-circle-fill"></i>
+                                {% else %}
+                                <i class="bi bi-arrow-up-circle-fill"></i>
+                                {% endif %}
+                                {{ tx.type_label }}
+                            </span>
+                        </td>
+                        <td class="fw-semibold">{{ tx.product_title }}</td>
+                        <td class="text-end fw-bold text-{{ tx.type_color }} fs-6">
+                            {{ tx.sign }}{{ tx.quantity }}
+                        </td>
+                        <td class="small">{{ tx.operator }}</td>
+                        <td class="text-muted small">{{ tx.note or '—' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-1 d-block mb-2 opacity-25"></i>
+                            暂无流水记录
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

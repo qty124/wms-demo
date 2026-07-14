@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}关于{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h3 class="mb-3"><i class="bi bi-info-circle me-2 text-primary"></i>关于本系统</h3>
+                <p class="text-muted">
+                    <strong>BookWMS</strong> 是一个面向<strong>图书仓储</strong>场景的演示型管理系统，
+                    采用 Python Flask + SQLite 单体架构，适合作为毕业设计、课程作业或个人作品展示。
+                </p>
+
+                <h6 class="mt-4">技术栈</h6>
+                <ul class="small">
+                    <li>后端：Python 3.10 + Flask 3.0 + Flask-SQLAlchemy 3.1</li>
+                    <li>数据库：SQLite（单文件，零配置）</li>
+                    <li>前端：Bootstrap 5.3 + Bootstrap Icons + Jinja2 模板</li>
+                    <li>部署：Gunicorn + Render 免费版</li>
+                    <li>代码托管：GitHub（<code>qty124/wms-demo</code>）</li>
+                </ul>
+
+                <h6 class="mt-4">功能模块</h6>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <div class="border rounded p-2 small">
+                            <i class="bi bi-speedometer2 text-primary"></i> 仪表盘（统计 + 预警 + 近期流水）
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-2 small">
+                            <i class="bi bi-book text-primary"></i> 商品增删改查（搜索 + 分类筛选）
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-2 small">
+                            <i class="bi bi-arrow-down-circle text-success"></i> 入库（自动累加 + 写流水）
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-2 small">
+                            <i class="bi bi-arrow-up-circle text-primary"></i> 出库（防负库存 + 写流水）
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-2 small">
+                            <i class="bi bi-clock-history text-primary"></i> 流水历史（按时间倒序）
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-2 small">
+                            <i class="bi bi-exclamation-triangle text-warning"></i> 库存预警（阈值可配置）
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="mt-4">目录结构</h6>
+                <pre class="bg-light p-2 small rounded mb-0"><code>仓储管理系统/
+├── app.py              # 主程序
+├── models.py           # 数据模型
+├── requirements.txt    # 依赖
+├── .gitignore
+├── instance/wms.db     # SQLite 数据库（自动生成）
+├── templates/          # Jinja2 模板
+│   ├── base.html
+│   ├── dashboard.html
+│   ├── products.html
+│   ├── product_form.html
+│   ├── stock_in.html   # 出入库共用
+│   ├── transactions.html
+│   └── error.html
+└── static/css/style.css</code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

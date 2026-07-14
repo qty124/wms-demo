@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}仪表盘{% endblock %}
+
+{% block content %}
+<!-- 顶部欢迎条 -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="mb-1"><i class="bi bi-speedometer2 me-2 text-primary"></i>仪表盘</h3>
+        <p class="text-muted mb-0">图书仓储实时数据概览 · {{ now.strftime('%Y 年 %m 月 %d 日') }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('stock_in') }}" class="btn btn-success">
+            <i class="bi bi-arrow-down-circle me-1"></i>入库
+        </a>
+        <a href="{{ url_for('stock_out') }}" class="btn btn-primary">
+            <i class="bi bi-arrow-up-circle me-1"></i>出库
+        </a>
+    </div>
+</div>
+
+<!-- 统计卡片 -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card stat-card-primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">商品总数</div>
+                        <div class="stat-value">{{ total_products }}</div>
+                        <div class="stat-subtext">种图书</div>
+                    </div>
+                    <i class="bi bi-book stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card stat-card-info h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">总库存</div>
+                        <div class="stat-value">{{ total_stock }}</div>
+                        <div class="stat-subtext">册</div>
+                    </div>
+                    <i class="bi bi-boxes stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card stat-card-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">库存价值</div>
+                        <div class="stat-value">{{ total_value|money }}</div>
+                        <div class="stat-subtext">按进价</div>
+                    </div>
+                    <i class="bi bi-cash-stack stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card stat-card-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">预警 / 缺货</div>
+                        <div class="stat-value">{{ low_stock_items + out_of_stock }}</div>
+                        <div class="stat-subtext">偏低 {{ low_stock_items }} · 缺货 {{ out_of_stock }}</div>
+                    </div>
+                    <i class="bi bi-exclamation-triangle stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- 左侧：近期流水 + 分类分布 -->
+    <div class="col-lg-8">
+        <!-- 近期流水 -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>近期出入库</h6>
+                <a href="{{ url_for('transaction_list') }}" class="small text-decoration-none">
+                    查看全部 <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_tx %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>时间</th>
+                                    <th>类型</th>
+                                    <th>图书</th>
+                                    <th class="text-end">数量</th>
+                                    <th>操作人</th>
+                                    <th>备注</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tx in recent_tx %}
+                                <tr>
+                                    <td class="text-muted small">{{ tx.created_at|datetime_cn }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ tx.type_color }}-subtle text-{{ tx.type_color }}">
+                                            {% if tx.type == 'in' %}<i class="bi bi-arrow-down"></i>{% else %}<i class="bi bi-arrow-up"></i>{% endif %}
+                                            {{ tx.type_label }}
+                                        </span>
+                                    </td>
+                                    <td>{{ tx.product_title }}</td>
+                                    <td class="text-end fw-bold text-{{ tx.type_color }}">{{ tx.sign }}{{ tx.quantity }}</td>
+                                    <td class="text-muted small">{{ tx.operator }}</td>
+                                    <td class="text-muted small">{{ tx.note or '—' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-2 opacity-25"></i>
+                        暂无出入库记录
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 分类分布 -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-bar-chart me-2 text-primary"></i>分类库存分布</h6>
+            </div>
+            <div class="card-body">
+                {% if categories %}
+                    {% set max_stock = categories|map(attribute='stock')|max %}
+                    {% for c in categories %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="fw-semibold">{{ c.name }}</span>
+                            <span class="text-muted">{{ c.stock }} 册</span>
+                        </div>
+                        <div class="progress" style="height: 18px;">
+                            <div class="progress-bar bg-primary" role="progressbar"
+                                 style="width: {{ (c.stock / max_stock * 100) if max_stock else 0 }}%">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-3">暂无分类数据</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧：库存预警 -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-warning">
+            <div class="card-header bg-warning-subtle">
+                <h6 class="mb-0 text-warning-emphasis">
+                    <i class="bi bi-exclamation-triangle me-2"></i>库存预警
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if low_list %}
+                    <ul class="list-group list-group-flush">
+                        {% for p in low_list %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <div>
+                                <div class="fw-semibold small">{{ p.title }}</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">{{ p.author }}</div>
+                            </div>
+                            <span class="badge bg-{{ p.status_color }} rounded-pill">
+                                {{ p.stock }} / {{ p.low_stock_threshold }}
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% if out_of_stock > 0 %}
+                        <div class="alert alert-danger mt-3 mb-0 small">
+                            <i class="bi bi-x-octagon me-1"></i>还有 {{ out_of_stock }} 种商品已缺货
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center text-success py-3">
+                        <i class="bi bi-check-circle fs-1 d-block mb-2"></i>
+                        所有商品库存充足 🎉
+                    </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-white text-center">
+                <a href="{{ url_for('product_list') }}" class="text-decoration-none small">
+                    <i class="bi bi-arrow-right me-1"></i>查看全部商品
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

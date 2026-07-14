@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}商品管理{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-1"><i class="bi bi-book me-2 text-primary"></i>商品管理</h3>
+        <p class="text-muted mb-0">共 {{ products|length }} 条记录{{ ' · 搜索：' + q if q else '' }}{{ ' · 分类：' + cat if cat else '' }}</p>
+    </div>
+    <a href="{{ url_for('product_create') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>新增商品
+    </a>
+</div>
+
+<!-- 搜索栏 -->
+<div class="card shadow-sm mb-3">
+    <div class="card-body py-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label small text-muted mb-1">搜索</label>
+                <input type="text" name="q" class="form-control" placeholder="书名 / 作者 / ISBN" value="{{ q }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">分类</label>
+                <select name="cat" class="form-select">
+                    <option value="">全部分类</option>
+                    {% for c in categories %}
+                    <option value="{{ c }}" {% if cat == c %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search me-1"></i>查询
+                </button>
+            </div>
+            <div class="col-md-2">
+                <a href="{{ url_for('product_list') }}" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-x-lg me-1"></i>重置
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 商品表 -->
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:60px;">#</th>
+                        <th>书名</th>
+                        <th>作者</th>
+                        <th>出版社</th>
+                        <th>分类</th>
+                        <th>ISBN</th>
+                        <th class="text-end">进价</th>
+                        <th class="text-end">售价</th>
+                        <th class="text-end">库存</th>
+                        <th>货架</th>
+                        <th>状态</th>
+                        <th class="text-end" style="width:160px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in products %}
+                    <tr>
+                        <td class="text-muted">{{ p.id }}</td>
+                        <td class="fw-semibold">{{ p.title }}</td>
+                        <td>{{ p.author }}</td>
+                        <td class="small text-muted">{{ p.publisher or '—' }}</td>
+                        <td>
+                            {% if p.category %}
+                                <span class="badge bg-light text-dark border">{{ p.category }}</span>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td class="small text-muted font-monospace">{{ p.isbn }}</td>
+                        <td class="text-end small">{{ p.cost|money }}</td>
+                        <td class="text-end small fw-semibold text-primary">{{ p.price|money }}</td>
+                        <td class="text-end fw-bold fs-6">{{ p.stock }}</td>
+                        <td class="small font-monospace text-muted">{{ p.location or '—' }}</td>
+                        <td>
+                            <span class="badge bg-{{ p.status_color }}-subtle text-{{ p.status_color }}">
+                                {{ p.status_label }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ url_for('product_edit', pid=p.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="post" action="{{ url_for('product_delete', pid=p.id) }}" class="d-inline"
+                                  onsubmit="return confirm('确定删除 {{ p.title }} 吗？该操作会同时删除相关流水记录。');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="12" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-1 d-block mb-2 opacity-25"></i>
+                            没有匹配的商品
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

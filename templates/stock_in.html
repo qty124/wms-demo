@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}{{ '入库' if mode == 'in' else '出库' }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">
+                {% if mode == 'in' %}
+                <i class="bi bi-arrow-down-circle-fill me-2 text-success"></i>商品入库
+                {% else %}
+                <i class="bi bi-arrow-up-circle-fill me-2 text-primary"></i>商品出库
+                {% endif %}
+            </h3>
+            <div>
+                {% if mode == 'in' %}
+                <a href="{{ url_for('stock_out') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-up-circle me-1"></i>切换到出库
+                </a>
+                {% else %}
+                <a href="{{ url_for('stock_in') }}" class="btn btn-outline-success">
+                    <i class="bi bi-arrow-down-circle me-1"></i>切换到入库
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                {% if not products %}
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-inbox fs-1 d-block mb-2 opacity-25"></i>
+                    暂无商品，请先
+                    <a href="{{ url_for('product_create') }}">添加商品</a>
+                </div>
+                {% else %}
+                <form method="post" id="stockForm">
+                    <div class="mb-3">
+                        <label class="form-label">选择商品 <span class="text-danger">*</span></label>
+                        <select name="product_id" id="productSelect" class="form-select" required>
+                            <option value="">-- 请选择 --</option>
+                            {% for p in products %}
+                            <option value="{{ p.id }}"
+                                    data-stock="{{ p.stock }}"
+                                    data-title="{{ p.title }}"
+                                    data-author="{{ p.author }}">
+                                [库存 {{ p.stock }}] {{ p.title }} · {{ p.author }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">数量 <span class="text-danger">*</span></label>
+                            <input type="number" name="quantity" id="quantityInput" class="form-control" min="1" required>
+                            <div class="form-text" id="stockHint"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">操作人</label>
+                            <input type="text" name="operator" class="form-control" value="管理员">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">备注</label>
+                            <input type="text" name="note" class="form-control"
+                                   placeholder="{% if mode == 'in' %}如：新书到货{% else %}如：客户订单{% endif %}">
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div id="previewBox" class="text-muted small"></div>
+                        <div>
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-light">取消</a>
+                            <button type="submit" class="btn btn-{{ 'success' if mode == 'in' else 'primary' }} px-4">
+                                {% if mode == 'in' %}
+                                <i class="bi bi-arrow-down-circle me-1"></i>确认入库
+                                {% else %}
+                                <i class="bi bi-arrow-up-circle me-1"></i>确认出库
+                                {% endif %}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 操作提示 -->
+        <div class="alert alert-{{ 'success' if mode == 'in' else 'primary' }} mt-3 small">
+            {% if mode == 'in' %}
+            <i class="bi bi-lightbulb me-1"></i>
+            <strong>入库小贴士：</strong> 入库会自动累加商品库存并写入流水记录，方便后续审计与统计。
+            {% else %}
+            <i class="bi bi-lightbulb me-1"></i>
+            <strong>出库小贴士：</strong> 出库数量超过当前库存会被系统拦截，避免出现负库存。
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const mode = "{{ mode }}";
+const select = document.getElementById('productSelect');
+const qty = document.getElementById('quantityInput');
+const hint = document.getElementById('stockHint');
+const preview = document.getElementById('previewBox');
+
+function updatePreview() {
+    const opt = select.options[select.selectedIndex];
+    if (!opt || !opt.value) {
+        hint.textContent = '';
+        preview.textContent = '';
+        return;
+    }
+    const stock = parseInt(opt.dataset.stock, 10);
+    const title = opt.dataset.title;
+    hint.textContent = `当前库存：${stock}`;
+
+    const n = parseInt(qty.value, 10) || 0;
+    if (mode === 'in') {
+        preview.innerHTML = `📥 入库后：<strong>${title}</strong> 库存 <strong>${stock + n}</strong>（+${n}）`;
+    } else {
+        const after = stock - n;
+        const color = after < 0 ? 'text-danger' : 'text-primary';
+        preview.innerHTML = `📤 出库后：<strong>${title}</strong> 库存 <strong class="${color}">${after}</strong>（${stock} - ${n}）`;
+    }
+}
+select?.addEventListener('change', updatePreview);
+qty?.addEventListener('input', updatePreview);
+
+// 出库模式下限制最大数量
+if (mode === 'out') {
+    qty?.addEventListener('input', () => {
+        const opt = select.options[select.selectedIndex];
+        if (!opt || !opt.value) return;
+        const stock = parseInt(opt.dataset.stock, 10);
+        if (parseInt(qty.value, 10) > stock) {
+            qty.setCustomValidity(`当前库存仅 ${stock}`);
+        } else {
+            qty.setCustomValidity('');
+        }
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}{{ '编辑商品' if product else '新增商品' }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">
+                <i class="bi bi-{{ 'pencil-square' if product else 'plus-circle' }} me-2 text-primary"></i>
+                {{ '编辑商品' if product else '新增商品' }}
+            </h3>
+            <a href="{{ url_for('product_list') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>返回列表
+            </a>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="post">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">ISBN <span class="text-danger">*</span></label>
+                            <input type="text" name="isbn" class="form-control" required
+                                   value="{{ product.isbn if product else '' }}"
+                                   {% if product %}readonly{% endif %}
+                                   placeholder="9787000000000">
+                            {% if product %}
+                            <div class="form-text">ISBN 创建后不可修改</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">书名 <span class="text-danger">*</span></label>
+                            <input type="text" name="title" class="form-control" required
+                                   value="{{ product.title if product else '' }}" placeholder="例如：深入理解计算机系统">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">作者 <span class="text-danger">*</span></label>
+                            <input type="text" name="author" class="form-control" required
+                                   value="{{ product.author if product else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">出版社</label>
+                            <input type="text" name="publisher" class="form-control"
+                                   value="{{ product.publisher if product else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">分类</label>
+                            <input type="text" name="category" class="form-control"
+                                   value="{{ product.category if product else '' }}"
+                                   placeholder="如：计算机/网络" list="catList">
+                            <datalist id="catList">
+                                <option value="计算机/网络">
+                                <option value="程序设计">
+                                <option value="软件工程">
+                                <option value="算法/数据结构">
+                                <option value="网络安全">
+                                <option value="操作系统">
+                                <option value="数据库">
+                                <option value="互联网/创业">
+                            </datalist>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">货架位置</label>
+                            <input type="text" name="location" class="form-control font-monospace"
+                                   value="{{ product.location if product else '' }}"
+                                   placeholder="如 A-01-03">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">进价 (¥)</label>
+                            <input type="number" name="cost" class="form-control" step="0.01" min="0"
+                                   value="{{ product.cost if product else 0 }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">售价 (¥)</label>
+                            <input type="number" name="price" class="form-control" step="0.01" min="0"
+                                   value="{{ product.price if product else 0 }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">预警阈值</label>
+                            <input type="number" name="low_stock_threshold" class="form-control" min="0"
+                                   value="{{ product.low_stock_threshold if product else 10 }}">
+                        </div>
+
+                        {% if not product %}
+                        <div class="col-md-12">
+                            <label class="form-label">初始库存</label>
+                            <input type="number" name="stock" class="form-control" min="0"
+                                   value="0">
+                            <div class="form-text">
+                                新增后建议用"入库"功能补货以保留流水记录
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="col-md-12">
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-info-circle me-1"></i>
+                                当前库存：<strong>{{ product.stock }}</strong>
+                                · 调整库存请通过
+                                <a href="{{ url_for('stock_in') }}">入库</a>
+                                /
+                                <a href="{{ url_for('stock_out') }}">出库</a> 功能
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <hr class="my-4">
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('product_list') }}" class="btn btn-light">取消</a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-check-lg me-1"></i>保存
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
